@@ -101,7 +101,7 @@ npm test
 Neither builds or runs the app: that needs the Android SDK and a phone. Checks that read the TV's own page run only when `CYTV_REPO`
 points at a checkout of [cleanyourtv-WebOS](https://github.com/lasharor/cleanyourtv-WebOS).
 
-**CI** (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
+**CI** (`.github/workflows/ci.yml`) runs on every push to `main` and `dev` and every pull request:
 
 | Job | What it checks |
 |---|---|
