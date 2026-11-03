@@ -627,6 +627,7 @@ run(async () => {
       !/openTv/.test(page.slice(page.indexOf('window.cytvFound'), page.indexOf('window.cytvNotFound'))),
     'the tap on Continue (a typed address, or one the search found and filled in) goes straight to the TV page, changing nothing while it loads, and a found address is never opened without that tap'
   );
+  ok(/\$appDir = Join-Path \$repo 'dist'/.test(build) && !/helper|phoneremote|mobile/.test(build), 'the build writes dist/tv-remote.apk, which is not committed, and names no path of the TV repository');
   ok(/aapt2/.test(build) && /d8/.test(build) && /apksigner/.test(build), 'it uses the SDK tools it names');
   // the README must say which SSDP reply counts as the TV
   const readme = read('README.md');
