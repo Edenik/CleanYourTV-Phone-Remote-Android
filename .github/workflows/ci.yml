@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [16, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # a JDK, so that the compiled checks of Addr.java and Backoff.java run (REQUIRE_JAVAC makes a missing one a failure)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Start page, bridge, address rules, wake packet, documentation
+        run: npm test
+        env:
+          REQUIRE_JAVAC: '1'
+
+  files:
+    name: Manifest, resources and pages are well-formed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: XML files parse
+        run: |
+          python3 - <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          files = glob.glob('android/AndroidManifest.xml') + glob.glob('android/res/**/*.xml', recursive=True)
+          assert files, 'no XML files found'
+          for f in files:
+              ET.parse(f)
+              print('ok  ', f)
+          PY
+      - name: Bundled pages parse as scripts
+        run: |
+          node - <<'JS'
+          const fs = require('fs'), vm = require('vm');
+          for (const f of ['web/start.html', 'web/off.html']) {
+            const html = fs.readFileSync(f, 'utf8');
+            const scripts = [];
+            html.replace(/<script[^>]*>([\s\S]*?)<\/script>/g, (_, s) => scripts.push(s));
+            if (!scripts.length) throw new Error(f + ': no script');
+            scripts.forEach(s => new vm.Script(s, { filename: f }));
+            console.log('ok  ', f, scripts.length + ' script(s)');
+          }
+          JS
+      - name: Every Java file compiles against the Android API
+        run: |
+          # android.jar from the runner's SDK: the whole app is compiled, not just the two classes that need no Android
+          JAR="$ANDROID_HOME/platforms/android-34/android.jar"
+          test -f "$JAR" || { sdkmanager "platforms;android-34" >/dev/null; }
+          mkdir -p /tmp/classes
+          javac -nowarn -source 8 -target 8 -classpath "$JAR" -d /tmp/classes $(find android/java -name '*.java')
+          echo "compiled $(find /tmp/classes -name '*.class' | wc -l) classes"
+
+  build:
+    name: Build the APK (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Android SDK parts the build pins
+        shell: pwsh
+        run: |
+          $sdk = $env:ANDROID_HOME
+          if (-not $sdk) { $sdk = $env:ANDROID_SDK_ROOT }
+          if (-not (Test-Path "$sdk\build-tools\34.0.0") -or -not (Test-Path "$sdk\platforms\android-34")) {
+            $mgr = Get-ChildItem "$sdk\cmdline-tools" -Recurse -Filter sdkmanager.bat | Select-Object -First 1
+            'y' * 20 | & $mgr.FullName --sdk_root=$sdk 'build-tools;34.0.0' 'platforms;android-34'
+          }
+          "SDK $sdk"
+          Get-ChildItem "$sdk\build-tools" | Select-Object -ExpandProperty Name
+      - name: Build
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File android/build.ps1
+      - name: Check the package
+        shell: pwsh
+        run: |
+          $apk = 'dist/tv-remote.apk'
+          if (-not (Test-Path $apk)) { throw 'no APK was built' }
+          $size = (Get-Item $apk).Length
+          if ($size -lt 10KB -or $size -gt 200KB) { throw "unexpected size: $size bytes" }
+          $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { $env:ANDROID_SDK_ROOT }
+          $aapt2 = "$sdk\build-tools\34.0.0\aapt2.exe"
+          $badging = & $aapt2 dump badging $apk
+          $badging | Select-String '^package:|sdkVersion|targetSdkVersion|uses-permission|application-label:' | ForEach-Object { $_.Line }
+          if (-not ($badging | Select-String "package: name='com.cleanyourtv.phone'")) { throw 'wrong package name' }
+          if (-not ($badging | Select-String "application-label:'TV Remote'")) { throw 'wrong app name' }
+          if (-not ($badging | Select-String "targetSdkVersion:'34'")) { throw 'target SDK is not 34' }
+          $perms = @($badging | Select-String "^uses-permission: name='([^']+)'" | ForEach-Object { $_.Matches[0].Groups[1].Value } | Sort-Object)
+          $want = @('android.permission.INTERNET', 'android.permission.VIBRATE')
+          if (($perms -join ',') -ne ($want -join ',')) { throw "permissions are: $($perms -join ', ')" }
+          $sha = (Get-FileHash $apk -Algorithm SHA256).Hash.ToLower()
+          "SHA-256 $sha"
+          "### tv-remote.apk`n`nSHA-256 ``$sha`` ($size bytes)" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tv-remote-apk
+          path: dist/tv-remote.apk
+          if-no-files-found: error

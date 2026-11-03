@@ -323,7 +323,11 @@ run(async () => {
       'the retry delay: at once, 1 s, 2 s, 4 s, 8 s, then never more than 10 s'
     );
     rmrf(dir);
-  } else console.log('  (javac not found: Addr and Backoff were checked as text only)');
+  } else {
+    // CI sets REQUIRE_JAVAC so that a runner without a JDK fails instead of quietly skipping the compiled checks
+    ok(!process.env.REQUIRE_JAVAC, 'javac is available (REQUIRE_JAVAC is set)');
+    console.log('  (javac not found: Addr and Backoff were checked as text only)');
+  }
 
   const storeSrc = read(javaDir + 'Store.java');
   ok(

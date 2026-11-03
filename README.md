@@ -1,5 +1,7 @@
 # CleanYourTV Phone Remote for Android
 
+[![CI](https://github.com/Edenik/CleanYourTV-Phone-Remote-Android/actions/workflows/ci.yml/badge.svg)](https://github.com/Edenik/CleanYourTV-Phone-Remote-Android/actions/workflows/ci.yml)
+
 An Android app for the **Phone remote** of [CleanYourTV for LG webOS](https://github.com/lasharor/cleanyourtv-WebOS). Nearly all of it
 is not an app: the remote, the pairing, the keys and the Power sheet are the TV's own page (`http://<tv>:8799/`), loaded in a WebView.
 The app adds the two things a browser cannot do:
@@ -91,9 +93,21 @@ states the SHA-256 of the file it carries.
 npm test
 ```
 
-`test/mobile.test.js` checks the start pages against the bridge, the address rules, the wake packet and the back-off. It does not
-build or run the app: that needs the Android SDK and a phone. Checks that read the TV's own page run only when `CYTV_REPO` points at a
-checkout of [cleanyourtv-WebOS](https://github.com/lasharor/cleanyourtv-WebOS).
+- `test/mobile.test.js`: the start pages against the bridge, the address rules, the wake packet and the back-off (`Addr.java` and
+  `Backoff.java` are compiled and run when a JDK is installed; `REQUIRE_JAVAC=1` makes a missing JDK a failure).
+- `test/docs.test.js`: every link and image in the Markdown files exists, every screenshot is used, the install QR code and the release
+  link agree, no package or key is committed, and no real IP or MAC address is in the repository.
+
+Neither builds or runs the app: that needs the Android SDK and a phone. Checks that read the TV's own page run only when `CYTV_REPO`
+points at a checkout of [cleanyourtv-WebOS](https://github.com/lasharor/cleanyourtv-WebOS).
+
+**CI** (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
+
+| Job | What it checks |
+|---|---|
+| Tests (Node 16, 20, 22) | `npm test` with a JDK and `REQUIRE_JAVAC=1` |
+| Manifest, resources and pages | the manifest and resource XML parse, the bundled pages' scripts parse, every Java file compiles against `android.jar` (API 34) |
+| Build the APK (Windows) | `android/build.ps1` builds and verifies the package; the package name, app name, target SDK 34 and the two permissions (`INTERNET`, `VIBRATE`, nothing else) are checked; the APK and its SHA-256 are attached to the run |
 
 ## Limits
 
