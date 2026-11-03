@@ -1,0 +1,5 @@
+# what the build makes: the package (attached to a release, not committed), the work folder and the local signing key
+dist/
+android/build/
+android/build-keystore/
+node_modules/
