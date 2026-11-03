@@ -49,10 +49,16 @@ while the TV is off (a saved copy of the page, or a small bundled page). One act
 ## Commands
 
 ```sh
-npm test                                                          # test/mobile.test.js (Node 8 or newer, no dependencies)
+npm test                                                          # test/mobile.test.js and test/docs.test.js (no dependencies)
 CYTV_REPO=../CleanYourTV npm test                                 # also the checks that read the TV's page
 powershell -ExecutionPolicy Bypass -File android/build.ps1        # dist/tv-remote.apk (Windows, Android SDK, JDK, Python)
 ```
+
+## CI
+
+`.github/workflows/ci.yml`: tests on Node 16, 20 and 22 (with a JDK and `REQUIRE_JAVAC=1`), XML, page scripts and a compile of every Java file against
+`android.jar`, and the APK build on Windows with a check of its package name, target SDK and permissions. A change that adds a permission or a
+file type must change the matching check in the same pull request. CI cannot run the app: say what was and was not run on a phone.
 
 ## Things to know
 
