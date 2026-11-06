@@ -48,7 +48,7 @@ input{width:100%;height:56px;padding:0 16px;font-size:17px;margin:0 0 8px;backgr
   <h1>Find your TV</h1>
   <p class=sub>Use this phone as a remote for your TV. You only do this once.</p>
   <div class=card><ol>
-    <li><i>1</i><span>On the TV, open the manager app: <b>Features &gt; Phone remote &gt; Pair a phone</b>. It shows a QR code and a code.</span></li>
+    <li><i>1</i><span>On the TV, open the <b>Phone remote</b> page on Home and choose <b>Pair a phone</b> (install the add-on first: manager app &gt; <b>Add-ons</b>). It shows a QR code and a code.</span></li>
     <li><i>2</i><span>Tap <b>Find my TV</b> below, or type the TV address.</span></li>
   </ol></div>
   <div id=typed class=hide>
@@ -143,7 +143,7 @@ window.cytvFound=function(h){
 window.cytvNotFound=function(){if(!searching)return;searching=false;paint();toast('Could not find the TV. Check it is on and on the same Wi-Fi as this phone, then try again, or type its address.','warn')};
 window.cytvOff=function(m){toast(m||'The TV did not answer.','warn')};
 var by=call('bye','');
-if(by)toast(by==='removed'?'Logged out. This phone was removed from the TV’s list.':'Logged out on this phone. The TV could not be reached, so it may still list this phone: remove it in the manager app, Features > Phone remote > Paired phones.',by==='removed'?'ok':'warn',by==='removed'?3000:10000);
+if(by)toast(by==='removed'?'Logged out. This phone was removed from the TV’s list.':'Logged out on this phone. The TV could not be reached, so it may still list this phone: remove it on the TV: Home > Phone remote > Phones.',by==='removed'?'ok':'warn',by==='removed'?3000:10000);
 host=clean(call('getAddr',''));
 if(host)setHost(host);else{show('setup');paint()}
 </script>

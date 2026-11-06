@@ -6,6 +6,7 @@ failure. CI sets `REQUIRE_JAVAC=1` so a runner without a JDK fails instead of sk
 - No dependencies. CI runs Node 16, 20 and 22; keep it plain (no `fs.rmSync`, no optional chaining) so it also runs on older Node.
 - It reads the app's source and the bundled pages and compiles `Addr.java` and `Backoff.java` with `javac` when one is installed. It does
   not build or run the app.
-- The checks that read the TV's own page (`helper/addons-bundled/phoneremote/page.js` in cleanyourtv-WebOS) run only when `CYTV_REPO`
-  points at a checkout of that repository.
+- The checks that read the TV's own page (`addons/catalog/phoneremote/page.js` in cleanyourtv-WebOS; the old
+  `helper/addons-bundled/phoneremote/page.js` is still found) and its protocol page (`docs/phone-remote-api.md`: the port and the
+  `window.CYTV_APP` hooks) run only when `CYTV_REPO` points at a checkout of that repository. A `CYTV_REPO` without them fails.
 - The README checks (the SSDP rule, the release link) keep the documentation honest: change the text and the check together.
