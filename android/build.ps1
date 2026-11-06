@@ -67,7 +67,7 @@ Write-Host 'start and off pages copied into the assets'
 if ($LASTEXITCODE -ne 0) { throw 'aapt2 compile failed' }
 & $aapt2 link -o (Join-Path $out 'base.apk') -I $androidJar --manifest (Join-Path $here 'AndroidManifest.xml') `
   -A (Join-Path $out 'assets') `
-  --min-sdk-version 21 --target-sdk-version 34 --version-code 1 --version-name 1.0.0 `
+  --min-sdk-version 21 --target-sdk-version 34 --version-code 2 --version-name 1.0.1 `
   (Join-Path $out 'res.zip')
 if ($LASTEXITCODE -ne 0) { throw 'aapt2 link failed' }
 
