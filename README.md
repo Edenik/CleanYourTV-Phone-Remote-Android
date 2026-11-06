@@ -25,11 +25,12 @@ The package is signed with a local debug key: fine for sideloading, not for the 
 
 ## Set up
 
-1. On the TV, in the manager app, switch on **Features › Phone remote** and open the pairing screen. It shows the TV's address
-   (for example `http://192.168.1.50:8799`) and a six-digit code.
+1. On the TV, install the **Phone remote** add-on in the manager app's **Add-ons** screen and switch it on. Then turn to its page on
+   Home (**Home · Live TV · Phone remote**) and choose **Pair a phone**. It shows the TV's address (for example
+   `http://192.168.1.50:8799`), a QR code and a six-digit code.
 2. Open the app and tap **Find my TV**. The address it finds is only filled into the field: tap **Continue** to open it. Or tap
    **Type the address instead**.
-   (The app also opens a `cytv://add?host=<address>&code=<code>` link, but the TV's manager does not show one: the TV's QR code is a
+   (The app also opens a `cytv://add?host=<address>&code=<code>` link, but the TV does not show one: the TV's QR code is a
    plain web address that opens the page in the browser.)
 3. The TV's page asks for the code. Enter it, name the phone and tap **Pair**. Done: next time, open the app and the remote is there.
 

@@ -1,6 +1,6 @@
 {
   "name": "cleanyourtv-phone-remote-android",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Android app for the CleanYourTV phone remote: a WebView around the TV's own page, plus Wake-on-LAN.",
   "license": "MIT",
