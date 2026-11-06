@@ -5,7 +5,17 @@ The app loads the TV's own phone remote page (`http://<tv>:8799/`) in a WebView 
 
 The TV side is the **Phone remote** add-on of [CleanYourTV for LG webOS](https://github.com/lasharor/cleanyourtv-WebOS); its LAN
 protocol (pairing, the WebSocket, the messages) is written down there as the phone remote API. This app does not speak that protocol
-itself: the page does.
+itself: the page does. The protocol page is
+[`docs/phone-remote-api.md`](https://github.com/lasharor/cleanyourtv-WebOS/blob/dev/docs/phone-remote-api.md).
+
+The add-on is a catalog add-on: it is installed and switched on in the manager app's **Add-ons** screen, and port 8799 listens only
+while it is on and a phone is paired or the pairing window is open. While nothing listens the app cannot tell that apart from a TV in
+standby, so it shows its saved page or the off screen.
+
+Seven of the methods below are the contract the protocol page names for a wrapper (its "window.CYTV_APP hooks" section): `wake`,
+`setMac`, `deviceName`, `buzz`, `up`, `forget`, `setName`. The TV page may call them on any screen, so they keep their names and
+meaning. The others serve this app's own bundled pages. With `CYTV_REPO` set, `test/mobile.test.js` checks that the bridge has every
+hook the protocol page names and that the TV page uses no other.
 
 | Method | Called by | What it does |
 |---|---|---|

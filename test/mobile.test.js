@@ -9,10 +9,19 @@ const os = require('os'),
   vm = require('vm');
 const { ok, root, run } = require('./lib');
 
-// The TV's own page lives in the CleanYourTV repository (helper/addons-bundled/phoneremote/page.js). The checks that read it run only when
-// CYTV_REPO points at a checkout of that repository; everything else here needs nothing but this repository.
-const TV_PAGE_FILE = process.env.CYTV_REPO && path.join(process.env.CYTV_REPO, 'helper', 'addons-bundled', 'phoneremote', 'page.js');
-const tvPage = TV_PAGE_FILE && fs.existsSync(TV_PAGE_FILE) ? TV_PAGE_FILE : null;
+// The TV's own page lives in the CleanYourTV repository: addons/catalog/phoneremote/page.js since the add-on moved to the catalog
+// (helper/addons-bundled/phoneremote/page.js before). The checks that read it run only when CYTV_REPO points at a checkout of that
+// repository; everything else here needs nothing but this repository. A CYTV_REPO without the page is a failure, not a quiet skip.
+const TV_PAGE_PATHS = [
+  ['addons', 'catalog', 'phoneremote', 'page.js'],
+  ['helper', 'addons-bundled', 'phoneremote', 'page.js'],
+];
+const tvPage = process.env.CYTV_REPO
+  ? TV_PAGE_PATHS.map(p => path.join.apply(path, [process.env.CYTV_REPO].concat(p))).filter(f => fs.existsSync(f))[0] || null
+  : null;
+// the protocol page the TV repository publishes: the port and the window.CYTV_APP hooks a wrapper may rely on
+const TV_API_DOC = process.env.CYTV_REPO && path.join(process.env.CYTV_REPO, 'docs', 'phone-remote-api.md');
+const tvApiDoc = TV_API_DOC && fs.existsSync(TV_API_DOC) ? TV_API_DOC : null;
 
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 // Node 8.12 (what check.sh runs the tests with) has no fs.rmSync: a folder is removed here by hand, children first
@@ -602,7 +611,7 @@ run(async () => {
       );
     }
     ok(
-      /Features > Phone remote > Paired phones/.test(page),
+      /Home > Phone remote > Phones/.test(page) && !/Features > Phone remote/.test(page),
       'and when the TV could not be told, the toast names the screen where the phone can still be removed'
     );
   }
@@ -637,4 +646,28 @@ run(async () => {
     /\$BuildTools = '34\.0\.0'/.test(build) && /\$Platform = 'android-34'/.test(build),
     'the build pins the build-tools and the platform instead of taking the newest installed'
   );
+
+  // ---- the TV repository's side: the page and the protocol page, when CYTV_REPO names a checkout ----
+  if (process.env.CYTV_REPO) {
+    ok(!!tvPage, 'CYTV_REPO has the phone remote page (addons/catalog/phoneremote/page.js)');
+    ok(!!tvApiDoc, 'CYTV_REPO has the protocol page (docs/phone-remote-api.md)');
+  }
+  if (tvApiDoc) {
+    const api = fs.readFileSync(tvApiDoc, 'utf8');
+    const portM = /port (\d{4,5})\*\*/.exec(api);
+    const appPort = /static final int PORT = (\d+);/.exec(read(javaDir + 'Addr.java'));
+    ok(
+      !!portM && !!appPort && portM[1] === appPort[1],
+      "the app's default port (Addr.PORT) is the one the protocol page names (" + (portM && portM[1]) + ')'
+    );
+    // "these seven names are the contract between the page and a wrapper: `wake`, `setMac`, ..."
+    const hookLine = /contract between the page and a wrapper:([\s\S]*?)\.\s/.exec(api);
+    const hooks = hookLine ? (hookLine[1].match(/`(\w+)`/g) || []).map(h => h.slice(1, -1)) : [];
+    ok(hooks.length >= 7, 'the protocol page lists the window.CYTV_APP hooks (' + hooks.join(', ') + ')');
+    const missing = hooks.filter(h => !new RegExp('@JavascriptInterface\\s+public\\s+\\w+\\s+' + h + '\\(').test(bridge));
+    ok(missing.length === 0, 'the bridge has every hook the protocol page names' + (missing.length ? ': missing ' + missing.join(', ') : ''));
+    const used = tvPage ? (fs.readFileSync(tvPage, 'utf8').match(/CYTV_APP\.(\w+)/g) || []).map(m => m.slice(9)) : [];
+    const extra = used.filter((h, i) => used.indexOf(h) === i && hooks.indexOf(h) < 0);
+    ok(extra.length === 0, 'the TV page uses no hook the protocol page leaves out' + (extra.length ? ': ' + extra.join(', ') : ''));
+  }
 });
