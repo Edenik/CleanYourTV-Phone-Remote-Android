@@ -112,7 +112,9 @@ points at a checkout of [cleanyourtv-WebOS](https://github.com/lasharor/cleanyou
 
 ## Limits
 
-- Android only. The start pages and the bridge are plain web code, so an iOS shell would reuse them, but it would need its own Xcode project.
+- Android only. On an iPhone or iPad, the TV's own page can be put on the Home Screen as an app instead (Phone remote add-on 1.1.0 and
+  newer: [On an iPhone or iPad](https://github.com/lasharor/cleanyourtv-WebOS/blob/dev/docs/phone-remote.md#on-an-iphone-or-ipad-the-remote-as-an-app)).
+  That app is the page without this app's two extras: it cannot send the Wake-on-LAN packet, and it cannot open while the TV is in deep standby.
 - The app keeps one TV; keeping several is not part of it.
 - Find my TV uses a reply only when it says `webos-second-screen` in `ST:` or `USN:`, so another machine on the network cannot answer
   the search and get the page (and the bridge) for itself.
